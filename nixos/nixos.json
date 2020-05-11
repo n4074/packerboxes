@@ -1,0 +1,81 @@
+{
+  "variables": {
+    "iso_url": "https://channels.nixos.org/nixos-20.03/latest-nixos-minimal-x86_64-linux.iso",
+    "iso_checksum": "f9b450b38f809fff62318ead9b234de783204308b3f41886e7d744edc5f78a52",
+    "iso_checksum_type": "sha256",
+    "output_directory": "build/",
+    "esxi_hostport": "22",
+    "vm_name": "nixos-base",
+    "http_directory": "."
+  },
+    "builders": [
+    {
+      "type": "vmware-iso",
+      "name": "{{user `vm_name`}}",
+      "vm_name": "{{ user `vm_name` }}",
+      "iso_url": "{{user `iso_url`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "iso_checksum_type": "{{user `iso_checksum_type`}}",
+      "output_directory": "{{ user `output_directory` }}/{{ user `vm_name`}}",
+      "http_directory": "{{user `http_directory`}}",
+      "boot_wait": "3s",
+      "boot_key_interval": "5ms",
+      "boot_command": [
+        "<down><enter><wait45s>",
+        "sudo su<enter><wait1s>",
+        "mkdir -m 0700 /root/.ssh<enter>",
+        "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/ssh.key.pub -o /root/.ssh/authorized_keys<enter>",
+        "systemctl start sshd<enter>"
+      ],
+      "disk_size": 81920,
+      "memory": 8192,
+      "cores": 2,
+      "sound": true,
+      "usb": true,
+      "remote_type": "esx5",
+      "remote_host": "{{user `esxi_hostname`}}",
+      "remote_port": "{{user `esxi_hostport`}}",
+      "remote_datastore": "{{user `esxi_datastore`}}",
+      "remote_username": "{{user `esxi_username`}}",
+      "remote_private_key_file": "{{user `esxi_private_key_file`}}",
+      "skip_export": true,
+      "keep_registered": true,
+      "ssh_wait_timeout": "500s",
+      "shutdown_command": "systemctl poweroff",
+      "guest_os_type": "other4xlinux-64",
+      "ssh_username": "root",
+      "ssh_private_key_file": "ssh.key",
+      "vmx_data": { 
+        "firmware": "efi",
+        "mks.enable3d": "TRUE",
+        "gui.fitGuestUsingNativeDisplayResolution": "TRUE",
+        "gui.perVMFullscreenAutofitMode": "resize",
+        "gui.perVMWindowAutofitMode":"resize"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts":["partition.sh"]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "nix-env -i git",
+        "nixos-generate-config --root /mnt"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "configuration.nix",
+      "destination": "/mnt/etc/nixos/configuration.nix"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "nixos-install --root /mnt --show-trace"
+      ]
+    }
+  ]
+}
