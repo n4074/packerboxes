@@ -46,6 +46,7 @@ in
   services.sshd.enable = true;
 
   users.users.root = {
-    initialPassword = "toor"; # initially empty root password
+    initialPassword = "triumvir egan stabile entice success"; # initially empty root password
+    openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICmOUt0rWo+d893BeoLp+ykyz225wRf8NUg23Mdfb5Y7" ];
   };
 }
