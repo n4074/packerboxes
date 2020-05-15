@@ -36,7 +36,7 @@
       "shutdown_command": "systemctl poweroff",
       "guest_os_type": "other4xlinux-64",
       "ssh_username": "root",
-      "ssh_private_key_file": "ssh.key",
+      "ssh_private_key_file": "{{user `ssh_private_key`}}",
       "vnc_disable_password": true,
       "skip_export": true,
       "keep_registered": true,
