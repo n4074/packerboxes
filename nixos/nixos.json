@@ -23,8 +23,11 @@
       "boot_command": [
         "<down><enter><wait45s>",
         "sudo su<enter><wait1s>",
-        "mkdir -m 0700 /root/.ssh<enter>",
-        "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/ssh.key.pub -o /root/.ssh/authorized_keys<enter>",
+        "cat > /etc/ssh/ca.pub <<SSH_EOF<enter>",
+        "{{user `ssh_ca_pub_key`}}<enter>",
+        "SSH_EOF<enter>",
+        "cp --remove-destination \"$(readlink /etc/ssh/sshd_config)\" /etc/ssh/sshd_config<enter>",
+        "echo TrustedUserCAKeys /etc/ssh/ca.pub >> /etc/ssh/sshd_config<enter>",
         "systemctl start sshd<enter>"
       ],
       "disk_size": 81920,
@@ -36,6 +39,7 @@
       "shutdown_command": "systemctl poweroff",
       "guest_os_type": "other4xlinux-64",
       "ssh_username": "root",
+      "ssh_agent_auth": true,
       "ssh_private_key_file": "{{user `ssh_private_key`}}",
       "vnc_disable_password": true,
       "skip_export": true,
@@ -69,8 +73,28 @@
     {
       "type": "shell",
       "inline": [
-        "nixos-install --root /mnt --show-trace"
+        "nixos-install --root /mnt --show-trace",
+        "cp {,/mnt}/etc/ssh/ca.pub",
+        "ssh-keygen -t ed25519 -N \"\" -f /mnt/etc/ssh/ssh_host_ed25519_key"
       ]
+    },
+    {
+      "type": "file",
+      "direction": "download",
+      "source": "/mnt/etc/ssh/ssh_host_ed25519_key.pub",
+      "destination": "./ssh_host_ed25519_key.pub"
+    },
+    {
+      "type": "shell-local",
+      "inline": [
+        "ssh-keygen -h -Us {{user `ssh_ca_pub_key`}} -I nixos-base -n nixos-base -V +365d ssh_host_ed25519_key.pub"
+      ]
+    },
+    {
+      "type": "file",
+      "generated": true,
+      "source": "ssh_host_ed25519_key-cert.pub",
+      "destination": "/mnt/etc/ssh/ssh_host_ed25519_key-cert.pub"
     }
-  ]
+   ]
 }
