@@ -9,20 +9,20 @@
   system.stateVersion = "20.03";  
 
   boot = {
-    loader.systemd-boot.enable = true; # UEFI - switch to GRUB  if using BIOS
+    loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
 
     kernelPackages = pkgs.linuxPackages_latest;
-    kernelParams = [ ]; # bugfix - https://github.com/NixOS/nixpkgs/issues/5829
+    kernelParams = [ ];
   };
 
-  services.sshd.enable = true;
+  services.openssh = {
+    enable = true;
+    # Both the CA and host certificates need to be placed here during provisioning
+    extraConfig = "TrustedUserCAKeys /etc/ssh/ca.pub\nHostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub";
+  };
 
   users.users.root = {
-    #initialPassword = "triumvir egan stabile entice success";
-    openssh = {
-      passwordAuthentication = false;
-      authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICmOUt0rWo+d893BeoLp+ykyz225wRf8NUg23Mdfb5Y7" ];
-    };
+    initialPassword = "toor"; # initially empty root password
   };
 }
