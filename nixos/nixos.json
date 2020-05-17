@@ -6,7 +6,7 @@
     "output_directory": "build/",
     "esxi_hostport": "22",
     "vm_name": "nixos-base",
-    "http_directory": "."
+    "root_password": "{{env `PACKER_ROOT_PASSWD`}}"
   },
     "builders": [
     {
@@ -23,11 +23,9 @@
       "boot_command": [
         "<down><enter><wait45s>",
         "sudo su<enter><wait1s>",
-        "cat > /etc/ssh/ca.pub <<SSH_EOF<enter>",
-        "{{user `ssh_ca_pub_key`}}<enter>",
-        "SSH_EOF<enter>",
-        "cp --remove-destination \"$(readlink /etc/ssh/sshd_config)\" /etc/ssh/sshd_config<enter>",
-        "echo TrustedUserCAKeys /etc/ssh/ca.pub >> /etc/ssh/sshd_config<enter>",
+        "passwd<enter><wait1s>",
+        "{{user `root_password`}}<enter><wait1s>",
+        "{{user `root_password`}}<enter><wait1s>",
         "systemctl start sshd<enter>"
       ],
       "disk_size": 81920,
@@ -39,8 +37,7 @@
       "shutdown_command": "systemctl poweroff",
       "guest_os_type": "other4xlinux-64",
       "ssh_username": "root",
-      "ssh_agent_auth": true,
-      "ssh_private_key_file": "{{user `ssh_private_key`}}",
+      "ssh_password": "{{user `root_password`}}",
       "vnc_disable_password": true,
       "skip_export": true,
       "keep_registered": true,
@@ -74,9 +71,13 @@
       "type": "shell",
       "inline": [
         "nixos-install --root /mnt --show-trace",
-        "cp {,/mnt}/etc/ssh/ca.pub",
         "ssh-keygen -t ed25519 -N \"\" -f /mnt/etc/ssh/ssh_host_ed25519_key"
       ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `ssh_ca_pub_key`}}",
+      "destination": "/mnt/etc/ssh/ca.pub"
     },
     {
       "type": "file",
@@ -95,6 +96,14 @@
       "generated": true,
       "source": "ssh_host_ed25519_key-cert.pub",
       "destination": "/mnt/etc/ssh/ssh_host_ed25519_key-cert.pub"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "nixos-enter --root /mnt",
+        "export HISTFILE=/dev/null",
+        " echo root:{{user `root_password`}} | chpasswd"
+      ]
     }
    ]
 }

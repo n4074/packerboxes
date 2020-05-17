@@ -21,8 +21,4 @@
     # Both the CA and host certificates need to be placed here during provisioning
     extraConfig = "TrustedUserCAKeys /etc/ssh/ca.pub\nHostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub";
   };
-
-  users.users.root = {
-    initialPassword = "toor"; # initially empty root password
-  };
 }
