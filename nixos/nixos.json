@@ -71,7 +71,7 @@
       "type": "shell",
       "inline": [
         "nixos-install --root /mnt --show-trace",
-        "ssh-keygen -t ed25519 -N \"\" -f /mnt/etc/ssh/ssh_host_ed25519_key"
+        "yes | ssh-keygen -t ed25519 -N \"\" -f /mnt/etc/ssh/ssh_host_ed25519_key"
       ]
     },
     {
@@ -88,7 +88,7 @@
     {
       "type": "shell-local",
       "inline": [
-        "ssh-keygen -h -Us {{user `ssh_ca_pub_key`}} -I nixos-base -n nixos-base -V +365d ssh_host_ed25519_key.pub"
+        "yes | ssh-keygen -h -Us {{user `ssh_ca_pub_key`}} -I nixos-base -n nixos-base -V +365d ssh_host_ed25519_key.pub"
       ]
     },
     {

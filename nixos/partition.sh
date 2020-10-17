@@ -7,3 +7,6 @@ mkfs.ext4 -F -m 0 -q -L root /dev/mapper/vg0-lv0
 mount -o noatime,errors=remount-ro /dev/mapper/vg0-lv0 /mnt
 mkdir /mnt/boot
 mount -o noatime,errors=remount-ro /dev/sda1 /mnt/boot
+# Always returns success. 
+# Useful for 'retry' in packer. Remove.
+true
