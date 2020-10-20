@@ -1,0 +1,109 @@
+{
+  "variables": {
+    "iso_url": "https://channels.nixos.org/nixos-20.03/latest-nixos-minimal-x86_64-linux.iso",
+    "iso_checksum": "3ebbf9cd9bdff0c7394eaef408c5c4f816c2f1d044b6e140c7531bbd17be1c47",
+    "iso_checksum_type": "sha256",
+    "output_directory": "build/",
+    "esxi_hostport": "22",
+    "vm_name": "nixos-base",
+    "root_password": "{{env `PACKER_ROOT_PASSWD`}}"
+  },
+    "builders": [
+    {
+      "type": "vmware-iso",
+      "name": "{{user `vm_name`}}",
+      "vm_name": "{{ user `vm_name` }}",
+      "iso_url": "{{user `iso_url`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "iso_checksum_type": "{{user `iso_checksum_type`}}",
+      "output_directory": "{{ user `output_directory` }}/{{ user `vm_name`}}",
+      "http_directory": "{{user `http_directory`}}",
+      "boot_wait": "3s",
+      "boot_key_interval": "5ms",
+      "boot_command": [
+        "<down><enter><wait45s>",
+        "sudo su<enter><wait1s>",
+        "passwd<enter><wait1s>",
+        "{{user `root_password`}}<enter><wait1s>",
+        "{{user `root_password`}}<enter><wait1s>",
+        "systemctl start sshd<enter>"
+      ],
+      "disk_size": 81920,
+      "memory": 8192,
+      "cores": 2,
+      "sound": true,
+      "usb": true,
+      "ssh_wait_timeout": "500s",
+      "shutdown_command": "systemctl poweroff",
+      "guest_os_type": "other4xlinux-64",
+      "ssh_username": "root",
+      "ssh_password": "{{user `root_password`}}",
+      "vnc_disable_password": true,
+      "skip_export": true,
+      "keep_registered": true,
+      "vmx_data": { 
+        "firmware": "efi",
+        "mks.enable3d": "TRUE",
+        "gui.fitGuestUsingNativeDisplayResolution": "TRUE",
+        "gui.perVMFullscreenAutofitMode": "resize",
+        "gui.perVMWindowAutofitMode":"resize"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts":["partition.sh"]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "nix-env -i git",
+        "nixos-generate-config --root /mnt"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "configuration.nix",
+      "destination": "/mnt/etc/nixos/configuration.nix"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "nixos-install --root /mnt --show-trace",
+        "yes | ssh-keygen -t ed25519 -N \"\" -f /mnt/etc/ssh/ssh_host_ed25519_key"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `ssh_ca_pub_key`}}",
+      "destination": "/mnt/etc/ssh/ca.pub"
+    },
+    {
+      "type": "file",
+      "direction": "download",
+      "source": "/mnt/etc/ssh/ssh_host_ed25519_key.pub",
+      "destination": "./ssh_host_ed25519_key.pub"
+    },
+    {
+      "type": "shell-local",
+      "inline": [
+        "yes | ssh-keygen -h -Us {{user `ssh_ca_pub_key`}} -I nixos-base -n nixos-base -V +365d ssh_host_ed25519_key.pub"
+      ]
+    },
+    {
+      "type": "file",
+      "generated": true,
+      "source": "ssh_host_ed25519_key-cert.pub",
+      "destination": "/mnt/etc/ssh/ssh_host_ed25519_key-cert.pub"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "nixos-enter --root /mnt",
+        "export HISTFILE=/dev/null",
+        " echo root:{{user `root_password`}} | chpasswd"
+      ]
+    }
+   ]
+}
