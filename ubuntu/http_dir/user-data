@@ -9,7 +9,7 @@ autoinstall:
     - arches: [default]
       uri: http://ports.ubuntu.com/ubuntu-ports
   identity: 
-    hostname: exordium
+    hostname: ubuntu
     password: '$6$rounds=656000$8rSjcVocb25v9A.O$v7ZwJzWxK6s8Z8/OE2XNyXAB1.HazQ6/Afviysigdkb.ekzjVxnQnCYljQ3M6rvJrFp.8PRuxLy9FQSVUFqna1' 
     username: user
   keyboard: {layout: us, toggle: null, variant: ''}

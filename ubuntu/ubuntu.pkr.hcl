@@ -57,14 +57,7 @@ source "vmware-iso" "ubuntu-base" {
   boot_command      = [
     "<enter><enter><f6><esc><wait> ",
     "autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ ",
-    "<enter><wait2m>",
-    "<enter><wait><down><enter>",
-    "<enter><wait>",
-    "${var.vm_name}<enter>",
-    "${var.username}<enter>",
-    "${local.initial_password}<enter>",
-    "${local.initial_password}<enter>",
-    "<enter>",
+    "<enter>"
     ]
   boot_key_interval = "5ms"
   boot_wait         = "3s"
@@ -80,8 +73,8 @@ source "vmware-iso" "ubuntu-base" {
   shutdown_command  = "systemctl poweroff"
   skip_export       = true
   sound             = true
-  ssh_password      = local.initial_password
   ssh_username      = var.username
+  ssh_password      = local.initial_password
   ssh_wait_timeout  = "20m"
   ssh_handshake_attempts = 100
   usb               = true
@@ -124,11 +117,12 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+    execute_command = "echo '${local.initial_password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     inline = [
-      "mv /tmp/{ca.pub,ssh_host_ed25519_*} /etc/ssh/",
+      "bash -c 'mv /tmp/{ca.pub,ssh_host_ed25519_*} /etc/ssh/'",
       "echo 'TrustedUserCAKeys /etc/ssh/ca.pub' >> /etc/ssh/sshd_config",
-      "echo 'HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub' >> /etc/ssh/sshd_config"
+      "echo 'HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub' >> /etc/ssh/sshd_config",
+      " echo ${var.username}:${var.password} | chpasswd"
     ]
   }
 }
